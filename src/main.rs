@@ -1,4 +1,5 @@
 use clap::Parser;
+use colored::*;
 
 mod cert;
 mod tcp;
@@ -18,17 +19,20 @@ fn main() -> std::io::Result<()> {
     let cert_der = tcp::get_cert(args.host)?;
     let certificate = cert::parse_der(cert_der).unwrap();
 
-    println!("Issuer: {}", certificate.issuer);
+    println!("{} {}", "Issuer:".bold().cyan(), certificate.issuer);
     println!(
-        "SANS: {}",
+        "{} {}",
+        "SANS:".bold().cyan(),
         certificate.sans.unwrap_or(String::from("missing"))
     );
     println!(
-        "Issued: {}",
+        "{} {}",
+        "Issued:".bold().cyan(),
         certificate.issue_date.unwrap_or(String::from("missing"))
     );
     println!(
-        "Expires: {}",
+        "{} {}",
+        "Expires:".bold().cyan(),
         certificate.expiry_date.unwrap_or(String::from("missing"))
     );
 
