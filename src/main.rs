@@ -23,17 +23,21 @@ fn main() -> std::io::Result<()> {
     println!(
         "{} {}",
         "SANS:".bold().cyan(),
-        certificate.sans.unwrap_or(String::from("missing"))
+        certificate.sans.unwrap_or_else(|| String::from("missing"))
     );
     println!(
         "{} {}",
         "Issued:".bold().cyan(),
-        certificate.issue_date.unwrap_or(String::from("missing"))
+        certificate
+            .issue_date
+            .unwrap_or_else(|| String::from("missing"))
     );
     println!(
         "{} {}",
         "Expires:".bold().cyan(),
-        certificate.expiry_date.unwrap_or(String::from("missing"))
+        certificate
+            .expiry_date
+            .unwrap_or_else(|| String::from("missing"))
     );
 
     Ok(())

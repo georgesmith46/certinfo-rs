@@ -47,13 +47,13 @@ fn send_hello(stream: &mut BufWriter<TcpStream>, host: String) -> std::io::Resul
     let record_len = full_len + 4;
     let record_header: [u8; 5] = [22, 3, 1, (record_len >> 8) as u8, record_len as u8];
 
-    stream.write(&record_header)?;
-    stream.write(&handshake_header)?;
-    stream.write(&HELLO_1)?;
-    stream.write(&extensions_meta)?;
-    stream.write(&server_name_meta)?;
-    stream.write(&server_name)?;
-    stream.write(&HELLO_2)?;
+    stream.write_all(&record_header)?;
+    stream.write_all(&handshake_header)?;
+    stream.write_all(&HELLO_1)?;
+    stream.write_all(&extensions_meta)?;
+    stream.write_all(&server_name_meta)?;
+    stream.write_all(server_name)?;
+    stream.write_all(&HELLO_2)?;
 
     stream.flush()?;
 
@@ -62,7 +62,7 @@ fn send_hello(stream: &mut BufWriter<TcpStream>, host: String) -> std::io::Resul
 
 fn get_next_message(stream: &mut BufReader<TcpStream>) -> std::io::Result<Vec<u8>> {
     let mut head = [0u8; 5];
-    stream.read(&mut head)?;
+    stream.read_exact(&mut head)?;
     let first = head[3] as usize;
     let second = head[4] as usize;
     let mut output = vec![0u8; (first << 8) | second];
@@ -79,8 +79,8 @@ fn connect(host: &str) -> std::io::Result<BufTcpStream> {
                 _ => &proxy,
             };
             let mut stream = BufTcpStream::new(TcpStream::connect(connect_host)?)?;
-            stream.output.write(
-                &format!("CONNECT {host}:443 HTTP/1.1\r\nHost: {host}:443\r\n\r\n").as_bytes(),
+            stream.output.write_all(
+                format!("CONNECT {host}:443 HTTP/1.1\r\nHost: {host}:443\r\n\r\n").as_bytes(),
             )?;
             stream.output.flush()?;
             let mut response = String::new();

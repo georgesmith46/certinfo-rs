@@ -9,22 +9,16 @@ pub struct Cert {
 
 fn get_sans(cert: &X509Certificate) -> Option<String> {
     match cert.subject_alternative_name() {
-        Ok(opt) => {
-            if let Some(ext) = opt {
-                Some(
-                    ext.value
-                        .general_names
-                        .iter()
-                        .map(|x| match x {
-                            GeneralName::DNSName(dns) => dns.to_string() + " ",
-                            _ => String::from(""),
-                        })
-                        .collect::<String>(),
-                )
-            } else {
-                None
-            }
-        }
+        Ok(opt) => opt.map(|ext| {
+            ext.value
+                .general_names
+                .iter()
+                .map(|x| match x {
+                    GeneralName::DNSName(dns) => dns.to_string() + " ",
+                    _ => String::from(""),
+                })
+                .collect::<String>()
+        }),
         _ => None,
     }
 }
