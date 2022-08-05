@@ -8,19 +8,19 @@ pub struct Cert {
 }
 
 fn get_sans(cert: &X509Certificate) -> Option<String> {
-    match cert.subject_alternative_name() {
-        Ok(opt) => opt.map(|ext| {
+    cert.subject_alternative_name().ok().and_then(|res| {
+        res.map(|ext| {
             ext.value
                 .general_names
                 .iter()
-                .map(|x| match x {
-                    GeneralName::DNSName(dns) => dns.to_string() + " ",
-                    _ => String::from(""),
+                .filter_map(|x| match x {
+                    GeneralName::DNSName(dns) => Some(dns.to_string()),
+                    _ => None,
                 })
-                .collect::<String>()
-        }),
-        _ => None,
-    }
+                .collect::<Vec<String>>()
+                .join(" ")
+        })
+    })
 }
 
 fn get_issuer(cert: &X509Certificate) -> String {
