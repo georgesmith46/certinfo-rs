@@ -28,9 +28,8 @@ fn connect(addr: String) -> Result<TcpStream> {
                 _ => &proxy,
             };
             let mut stream = TcpStream::connect(host)?;
-            stream.write_all(
-                format!("CONNECT {addr}:443 HTTP/1.1\r\nHost: {addr}:443\r\n\r\n").as_bytes(),
-            )?;
+            stream
+                .write_all(format!("CONNECT {addr} HTTP/1.1\r\nHost: {addr}\r\n\r\n").as_bytes())?;
             stream.flush()?;
             let mut response = String::new();
             let mut reader = BufReader::new(stream.try_clone()?);
