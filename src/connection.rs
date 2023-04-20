@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use rustls::client::{ServerCertVerified, ServerCertVerifier};
 use rustls::{Certificate, ClientConfig, ClientConnection, RootCertStore, ServerName};
+use std::io::{Read, Write};
 use std::{net::TcpStream, sync::Arc};
 
 pub struct CertificateVerifier;
@@ -19,6 +20,27 @@ impl ServerCertVerifier for CertificateVerifier {
     }
 }
 
+fn connect(addr: String) -> Result<TcpStream> {
+    match std::env::var("HTTP_PROXY") {
+        Ok(proxy) => {
+            let host = match proxy.split_once("//") {
+                Some((_, host)) => host,
+                _ => &proxy,
+            };
+            let mut stream = TcpStream::connect(host)?;
+            stream.write_all(
+                format!("CONNECT {host}:443 HTTP/1.1\r\nHost: {host}:443\r\n\r\n").as_bytes(),
+            )?;
+            stream.flush()?;
+            let mut response = vec![];
+            stream.read_to_end(&mut response)?;
+
+            Ok(stream)
+        }
+        _ => Ok(TcpStream::connect(addr)?),
+    }
+}
+
 pub fn get_certificate_der(domain: String, port: u16) -> Result<Vec<u8>> {
     let addr = format!("{domain}:{port}");
     let server_name = ServerName::try_from(domain.as_str())?;
@@ -33,7 +55,7 @@ pub fn get_certificate_der(domain: String, port: u16) -> Result<Vec<u8>> {
         .set_certificate_verifier(Arc::new(CertificateVerifier));
 
     let mut session = ClientConnection::new(Arc::new(config), server_name)?;
-    let mut socket = TcpStream::connect(addr)?;
+    let mut socket = connect(addr)?;
 
     while session.peer_certificates().is_none() {
         session.write_tls(&mut socket)?;
