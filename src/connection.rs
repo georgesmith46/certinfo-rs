@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use rustls::client::{ServerCertVerified, ServerCertVerifier};
 use rustls::{Certificate, ClientConfig, ClientConnection, RootCertStore, ServerName};
-use std::io::{Read, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::{net::TcpStream, sync::Arc};
 
 pub struct CertificateVerifier;
@@ -29,11 +29,13 @@ fn connect(addr: String) -> Result<TcpStream> {
             };
             let mut stream = TcpStream::connect(host)?;
             stream.write_all(
-                format!("CONNECT {host}:443 HTTP/1.1\r\nHost: {host}:443\r\n\r\n").as_bytes(),
+                format!("CONNECT {addr}:443 HTTP/1.1\r\nHost: {addr}:443\r\n\r\n").as_bytes(),
             )?;
             stream.flush()?;
-            let mut response = vec![];
-            stream.read_to_end(&mut response)?;
+            let mut response = String::new();
+            let mut reader = BufReader::new(stream.try_clone()?);
+            reader.read_line(&mut response)?;
+            reader.read_line(&mut response)?;
 
             Ok(stream)
         }
