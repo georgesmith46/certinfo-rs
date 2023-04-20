@@ -1,23 +1,27 @@
+use anyhow::Result;
 use clap::Parser;
 use colored::*;
 
-mod cert;
-mod tcp;
+mod certificate;
+mod connection;
 
-/// Prints the certificate information for a HTTPS connection
+/// Prints the TLS certificate information for a TCP connection
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
-    /// Host name (e.g. google.com)
-    #[clap(short, long, value_parser)]
-    host: String,
+    /// Domain name (e.g. google.com)
+    #[arg(value_parser)]
+    domain: String,
+
+    /// Port
+    #[arg(short, long, default_value_t = 443)]
+    port: u16,
 }
 
-fn main() -> std::io::Result<()> {
+fn main() -> Result<()> {
     let args = Args::parse();
-
-    let cert_der = tcp::get_cert(args.host)?;
-    let certificate = cert::parse_der(cert_der).unwrap();
+    let certificate_der = connection::get_certificate_der(args.domain, args.port)?;
+    let certificate = certificate::parse_der(certificate_der)?;
 
     println!("{} {}", "Issuer:".bold().cyan(), certificate.issuer);
     println!(
