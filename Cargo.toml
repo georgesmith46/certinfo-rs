@@ -2,6 +2,8 @@
 name = "certinfo"
 version = "0.1.0"
 edition = "2021"
+description = "Experimental CLI tool for retrieving TLS certificate information for a TCP connection"
+license = "MIT"
 
 [dependencies]
 anyhow = "1.0.70"
